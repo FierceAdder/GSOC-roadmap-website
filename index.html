@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Professional Tech Focus -->
-    <!-- Application Structure Plan: The SPA is structured as a chronological, narrative journey through the four key phases of the GSoC plan. This linear flow is intuitive and mirrors the user's progression from learning to execution. It starts with a high-level overview (KPIs), then dives into each phase with dedicated sections. The new "Daily Schedule" section acts as a detailed drill-down, allowing users to interactively filter and view granular daily tasks by month, enhancing usability and avoiding information overload within the single-page format. This thematic, phased approach with a detailed interactive component was chosen to create a motivational and easy-to-follow story, making the dense information more digestible and actionable for the user. -->
+    <!-- Application Structure Plan: The SPA is structured as a chronological, narrative journey through the four key phases of the GSoC plan. This linear flow is intuitive and mirrors the user's progression from learning to execution. It starts with a high-level overview (KPIs), then dives into each phase with dedicated sections. The "Detailed Daily Schedule" section acts as a detailed drill-down, allowing users to interactively view granular daily tasks via a calendar interface, enhancing usability and avoiding information overload within the single-page format. Tasks are now completable for progress tracking, providing direct access to specific dates. This thematic, phased approach with detailed interactive components was chosen to create a motivational and easy-to-follow story, making the dense information more digestible and actionable for the user. -->
     <!-- Visualization & Content Choices:
         - KPIs: Goal: Inform. Method: Large stat cards (HTML/CSS). Justification: High-impact, immediate view of starting strengths.
         - Phase 1 DSA Topics: Goal: Compare Composition. Method: Chart.js Doughnut Chart. Justification: Ideal for showing the proportional effort across different DSA topics.
@@ -16,7 +16,7 @@
         - Phase 2 Contribution Flow: Goal: Organize Process. Method: HTML/CSS Flowchart. Justification: Visually represents a step-by-step process clearly without using forbidden SVG/Mermaid.
         - Phase 3 Timeline: Goal: Show Change. Method: Chart.js Line Chart. Justification: Effectively shows projected progress and effort distribution over the 12-week coding period.
         - Phase 3 Proposal Anatomy & Phase 4 Execution Cycle: Goal: Organize List/Process. Method: Styled HTML lists/timeline. Justification: A clean, semantic way to present critical checklist items and sequential steps.
-        - Daily Schedule: Goal: Organize/Inform. Method: Interactive Month Selector (HTML/JS) with dynamic list of daily task cards (HTML/CSS/JS). Justification: Allows users to explore a large dataset (daily tasks) by month, preventing overwhelming scroll, providing direct access to specific dates, and maintaining clickable resource links for easy access.
+        - Daily Schedule: Goal: Organize/Inform/Track. Method: Interactive Calendar (HTML/CSS/JS) with dynamic list of completable daily task cards (HTML/CSS/JS). Justification: Allows users to explore a large dataset (daily tasks) by date, provides visual cues for days with tasks, enables tracking of completion status via local storage, making the planning more actionable. Each daily entry is now further broken down into individual, completable sub-tasks for finer-grained progress tracking.
         - Library/Method: Chart.js for all charts (Canvas), HTML/CSS with Tailwind for all diagrams and interactive elements.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
@@ -75,7 +75,7 @@
             border: 3px solid #F8F9FA;
         }
         .daily-plan-scroll-container {
-            max-height: 80vh; /* Adjust as needed */
+            max-height: 80vh;
             overflow-y: auto;
         }
         .daily-plan-card {
@@ -87,6 +87,80 @@
         }
         .daily-plan-resource-link:hover {
             text-decoration: underline;
+        }
+
+        /* Calendar specific styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .calendar-day {
+            padding: 8px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-day:hover {
+            background-color: #E6F0FF; /* blue-100 */
+        }
+        .calendar-day.current-month {
+            color: #343A40;
+        }
+        .calendar-day.other-month {
+            color: #ADB5BD; /* gray-500 */
+        }
+        .calendar-day.has-tasks {
+            background-color: #D6F5F5; /* teal-100 */
+        }
+        .calendar-day.selected-day {
+            background-color: #0052CC; /* primary blue */
+            color: #FFFFFF;
+            font-weight: 600; /* font-semibold */
+        }
+        .calendar-day.selected-day.has-tasks {
+             background-color: #0052CC;
+        }
+        .calendar-weekday {
+            font-weight: 600; /* font-semibold */
+            color: #172B4D; /* section-title */
+            padding: 8px 4px;
+        }
+        .task-checkbox-label {
+            display: flex;
+            align-items: flex-start; /* Align checkbox to top of text */
+            cursor: pointer;
+            font-weight: normal;
+            margin-bottom: 8px; /* Spacing between sub-tasks */
+        }
+        .task-checkbox-label:last-of-type {
+            margin-bottom: 0; /* No margin after the last task */
+        }
+        .task-checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            min-width: 18px; /* Ensure it doesn't shrink */
+            min-height: 18px; /* Ensure it doesn't shrink */
+            flex-shrink: 0; /* Prevent checkbox from shrinking */
+        }
+        .task-completed {
+            text-decoration: line-through;
+            color: #6C757D; /* gray-600 */
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: #00A6A6; /* accent-teal */
+            border-radius: 50%;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -254,17 +328,26 @@
             <div class="text-center mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold section-title">Detailed Daily Schedule</h2>
                 <p class="text-lg accent-orange font-semibold">June 2025 - August 2026</p>
-                <p class="mt-3 max-w-3xl mx-auto text-gray-600">Explore your day-to-day tasks and resources across the entire GSoC preparation journey. Select a month to view the detailed plan for that period.</p>
+                <p class="mt-3 max-w-3xl mx-auto text-gray-600">Explore your day-to-day tasks and resources across the entire GSoC preparation journey. Click on a date in the calendar to view its detailed plan and mark tasks as complete.</p>
             </div>
-            <div class="card rounded-lg shadow-md p-6 md:p-8 max-w-4xl mx-auto">
-                <div class="mb-6 flex flex-col sm:flex-row items-center sm:justify-between space-y-4 sm:space-y-0 sm:space-x-4">
-                    <label for="month-select" class="text-lg font-semibold text-gray-700">Select Month:</label>
-                    <select id="month-select" class="block w-full sm:w-auto p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
-                        <!-- Options will be populated by JavaScript -->
-                    </select>
+            <div class="card rounded-lg shadow-md p-6 md:p-8 max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="prev-month" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold">&#9664;</button>
+                    <h3 id="current-month-display" class="text-xl font-bold text-center section-title"></h3>
+                    <button id="next-month" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold">&#9654;</button>
                 </div>
-                <div id="daily-plan-content" class="daily-plan-scroll-container pr-2">
-                    <!-- Daily plan cards will be rendered here by JavaScript -->
+                <div class="calendar-grid mb-6">
+                    <div class="calendar-weekday">Sun</div>
+                    <div class="calendar-weekday">Mon</div>
+                    <div class="calendar-weekday">Tue</div>
+                    <div class="calendar-weekday">Wed</div>
+                    <div class="calendar-weekday">Thu</div>
+                    <div class="calendar-weekday">Fri</div>
+                    <div class="calendar-weekday">Sat</div>
+                    <!-- Calendar days will be populated by JavaScript -->
+                </div>
+                <div id="daily-tasks-display" class="daily-plan-scroll-container pr-2">
+                    <p class="text-gray-500 text-center py-8">Select a date from the calendar above to view its tasks.</p>
                 </div>
             </div>
         </section>
@@ -436,1092 +519,1677 @@
             }
         });
 
-        const dailyPlanData = {
-            "June 2025": [
-                {
-                    date: "Jun 20",
-                    tasks: "Review Graph basics (Adjacency List/Matrix, Traversal). Start Striver's TakeUForward Graph playlist/sheets (video explanations). Python AI/ML: Begin 'Python for Data Science and Machine Learning Bootcamp' (Udemy, Jose Portilla) - Focus on basic Python syntax review and introduction to NumPy.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp (Udemy, Jose Portilla)", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" }
-                    ]
-                },
-                {
-                    date: "Jun 21",
-                    tasks: "Continue with BFS/DFS implementations and variations (e.g., Cycle Detection) in Java. Practice 3-4 problems on LeetCode (easy/medium). Python AI/ML: Continue Udemy course, focusing on NumPy.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" }
-                    ]
-                },
-                {
-                    date: "Jun 22",
-                    tasks: "Introduce Dijkstra's Algorithm (video explanation). Understand the greedy approach and implementation. Practice 2 problems. Python AI/ML: Continue Udemy course, focusing on NumPy and early Pandas.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" }
-                    ]
-                },
-                {
-                    date: "Jun 23",
-                    tasks: "Work on Bellman-Ford and Floyd-Warshall (video explanations). Understand their applications and differences from Dijkstra. Practice 2 problems. Python AI/ML: Continue Udemy course, focusing on Pandas.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" }
-                    ]
-                },
-                {
-                    date: "Jun 24",
-                    tasks: "Start with Minimum Spanning Trees (MSTs) - Prim's Algorithm (video explanation). Implementation and practice. Python AI/ML: Continue Udemy course, focusing on Matplotlib/Seaborn basics.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "Matplotlib Documentation", url: "https://matplotlib.org/stable/contents.html" },
-                        { text: "Seaborn Documentation", url: "https://seaborn.pydata.org/" }
-                    ]
-                },
-                {
-                    date: "Jun 25",
-                    tasks: "Kruskal's Algorithm for MSTs (video explanation). Understand Disjoint Set Union (DSU) needed for Kruskal's. Practice 2 MST problems. Python AI/ML: Continue Udemy course, focusing on Matplotlib/Seaborn basics.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" }
-                    ]
-                },
-                {
-                    date: "Jun 26",
-                    tasks: "Review all Graph algorithms covered this week. Solve 3-4 mixed Graph problems on LeetCode/AlgoExpert. Python AI/ML: Finish introductory sections of Udemy course, ensuring basic familiarity with NumPy, Pandas, Matplotlib/Seaborn.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" }
-                    ]
-                },
-                {
-                    date: "Jun 27",
-                    tasks: "Introduction to Dynamic Programming (video explanation). Understand memoization vs. tabulation. Start with basic 1D DP problems (e.g., Fibonacci, climbing stairs). Python AI/ML: Start Andrew Ng's Machine Learning Course (Coursera) - Focus on foundational concepts and mathematical understanding of ML (Supervised Learning, Linear Regression).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Andrew Ng's Machine Learning Course (Coursera)", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jun 28",
-                    tasks: "DP on Grids (e.g., unique paths, minimum path sum). Practice 3 problems. Python AI/ML: Andrew Ng's ML Course - Gradient Descent, Multivariate Linear Regression.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io (Free/Paid)", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jun 29",
-                    tasks: "DP on Sequences/Arrays (e.g., Longest Common Subsequence, Longest Increasing Subsequence). Practice 3 problems. Python AI/ML: Andrew Ng's ML Course - Logistic Regression, Regularization.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jun 30",
-                    tasks: "Knapsack Problem variations (0/1 Knapsack, Unbounded Knapsack). Practice 2-3 problems. Python AI/ML: Andrew Ng's ML Course - Neural Networks (basic architecture, backpropagation intuition).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                }
-            ],
-            "July 2025": [
-                {
-                    date: "Jul 1",
-                    tasks: "DP on Strings (e.g., Edit Distance, Palindromic Subsequences). Practice 2-3 problems. Python AI/ML: Andrew Ng's ML Course - Support Vector Machines (SVMs) - intuition.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jul 2",
-                    tasks: "Tree DP patterns. Practice 2 problems. Python AI/ML: Andrew Ng's ML Course - Unsupervised Learning (Clustering - K-Means), Dimensionality Reduction (PCA).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jul 3",
-                    tasks: "Mixed DP problems from LeetCode Medium/Hard. Focus on problem recognition and applying appropriate patterns. Python AI/ML: Andrew Ng's ML Course - Anomaly Detection, Recommender Systems. Review key concepts and assignments (port concepts to Python if possible).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "NeetCode.io", url: "https://neetcode.io/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
-                    ]
-                },
-                {
-                    date: "Jul 4",
-                    tasks: "Review Binary Search Trees (BSTs) and start Balanced BSTs (AVL/Red-Black Tree concepts, no deep implementation yet). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: Start 'Machine Learning A-Z™: AI, Python & R Data Science' (Udemy) - Data Preprocessing.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science (Udemy, Kirill Eremenko & Hadelin de Ponteves)", url: "https://www.udemy.com/course/machinelearning/" }
-                    ]
-                },
-                {
-                    date: "Jul 5",
-                    tasks: "Heaps (Min/Max Heap implementation from scratch or using `PriorityQueue`). Practice 3-4 problems (e.g., Kth largest element, merge k sorted lists). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: Implement Linear Regression and Logistic Regression (Scikit-learn).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
-                    ]
-                },
-                {
-                    date: "Jul 6",
-                    tasks: "Tries (Prefix Tree) implementation. Practice problems involving string searching/prefix matching. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: Implement K-Nearest Neighbors (KNN) and Support Vector Machines (SVMs) using Scikit-learn.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
-                    ]
-                },
-                {
-                    date: "Jul 7",
-                    tasks: "Segment Trees (introduction, range query, point update). Understand the structure and build process. Practice 2 problems. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: Decision Trees and Random Forests implementation with Scikit-learn.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
-                    ]
-                },
-                {
-                    date: "Jul 8",
-                    tasks: "Segment Trees (range update, lazy propagation). Practice 2 problems. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: K-Means Clustering and Hierarchical Clustering implementation.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
-                    ]
-                },
-                {
-                    date: "Jul 9",
-                    tasks: "Fenwick Trees (BIT - Binary Indexed Tree). Understand applications for prefix sums and updates. Practice 2 problems. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: Dimensionality Reduction (PCA) and model evaluation metrics.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
-                    ]
-                },
-                {
-                    date: "Jul 10",
-                    tasks: "Mixed problems focusing on Trees, Heaps, and Tries from LeetCode Hard. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week. Python AI/ML: End-to-end small ML project.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Kaggle", url: "https://www.kaggle.com/datasets" },
-                        { text: "UCI Machine Learning Repository", url: "https://archive.ics.uci.edu/ml/index.php" }
-                    ]
-                },
-                {
-                    date: "Jul 11",
-                    tasks: "Number Theory: Primes (Sieve of Eratosthenes), GCD, LCM, Modular Arithmetic. Practice 3-4 problems. Python AI/ML: Start 'The Complete Python Developer in 202X: Zero to Mastery' (Udemy) or similar – Focus on Python Project Structure (setup.py/pyproject.toml, virtual environments).",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "The Complete Python Developer in 202X: Zero to Mastery (Udemy)", url: "https://www.udemy.com/course/complete-python-developer-zero-to-mastery/" },
-                        { text: "Real Python: Python Packaging", url: "https://realpython.com/python-application-layouts/" }
-                    ]
-                },
-                {
-                    date: "Jul 12",
-                    tasks: "Bit Manipulation: Basic operations (AND, OR, XOR, NOT), Bit Masks, Power of 2, Counting set bits. Practice 3-4 problems. Python AI/ML: Dependency Management (pip, Poetry, pipenv). Create a small project and manage dependencies.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Real Python: Pipenv", url: "https://realpython.com/pipenv-guide/" },
-                        { text: "Poetry Documentation", url: "https://python-poetry.org/docs/" }
-                    ]
-                },
-                {
-                    date: "Jul 13",
-                    tasks: "More advanced Bit Manipulation techniques. Practice 2-3 problems. Python AI/ML: Unit Testing with `unittest`. Write tests for a simple Python module.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python unittest Documentation", url: "https://docs.python.org/3/library/unittest.html" }
-                    ]
-                },
-                {
-                    date: "Jul 14",
-                    tasks: "Competitive Programming: Introduction to Codeforces/AtCoder. Participate in a Div 2 (Codeforces) or Beginner (AtCoder) contest. Focus on understanding the platform and time management. Python AI/ML: Unit Testing with `pytest`. Learn `pytest` fixtures, assertions. Convert `unittest` tests to `pytest`.",
-                    resources: [
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" },
-                        { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" }
-                    ]
-                },
-                {
-                    date: "Jul 15",
-                    tasks: "Analyze contest problems, learn from editorials. Solve 3-4 additional LeetCode Medium/Hard problems on advanced DSA topics. Python AI/ML: Integration Testing concepts. Learn about mock objects for testing external dependencies.",
-                    resources: [
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Python unittest.mock Documentation", url: "https://docs.python.org/3/library/unittest.mock.html" }
-                    ]
-                },
-                {
-                    date: "Jul 16",
-                    tasks: "Participate in another competitive programming contest. Python AI/ML: Logging: Python's `logging` module. Implement effective logging in a sample application.",
-                    resources: [
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" },
-                        { text: "Python logging Documentation", url: "https://docs.python.org/3/library/logging.html" }
-                    ]
-                },
-                {
-                    date: "Jul 17",
-                    tasks: "Analyze contest problems and solidify understanding of advanced DSA through practice. Python AI/ML: Code Quality: Linters (Flake8, Black). Set up linters for your Python projects and practice code formatting.",
-                    resources: [
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" },
-                        { text: "Flake8 Documentation", url: "https://flake8.pycqa.org/en/latest/" },
-                        { text: "Black Documentation", url: "https://github.com/psf/black" }
-                    ]
-                },
-                {
-                    date: "Jul 18",
-                    tasks: "Andrew Ng's ML Course: Supervised Learning Introduction, Linear Regression (theory and cost function). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 19",
-                    tasks: "Andrew Ng's ML Course: Gradient Descent, Multivariate Linear Regression. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 20",
-                    tasks: "Andrew Ng's ML Course: Logistic Regression, Regularization. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 21",
-                    tasks: "Andrew Ng's ML Course: Neural Networks (basic architecture, backpropagation intuition). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 22",
-                    tasks: "Andrew Ng's ML Course: Support Vector Machines (SVMs) - intuition. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 23",
-                    tasks: "Andrew Ng's ML Course: Unsupervised Learning (Clustering - K-Means), Dimensionality Reduction (PCA). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 24",
-                    tasks: "Andrew Ng's ML Course: Anomaly Detection, Recommender Systems. Review key concepts and assignments (port concepts to Python if possible). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 25",
-                    tasks: "Start 'Machine Learning A-Z™: AI, Python & R Data Science' (Udemy). Focus on data preprocessing techniques (handling missing data, encoding categorical data, feature scaling). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science (Udemy, Kirill Eremenko & Hadelin de Ponteves)", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Preprocessing", url: "https://scikit-learn.org/stable/modules/preprocessing.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 26",
-                    tasks: "Implement Linear Regression and Logistic Regression from scratch (or using NumPy) and then using Scikit-learn. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Linear Models", url: "https://scikit-learn.org/stable/modules/linear_model.html" },
-                        { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 27",
-                    tasks: "Implement K-Nearest Neighbors (KNN) and Support Vector Machines (SVMs) using Scikit-learn. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Neighbors", url: "https://scikit-learn.org/stable/modules/neighbors.html" },
-                        { text: "Scikit-learn SVM", url: "https://scikit-learn.org/stable/modules/svm.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 28",
-                    tasks: "Decision Trees and Random Forests implementation with Scikit-learn. Understand ensemble methods. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Tree Models", url: "https://scikit-learn.org/stable/modules/tree.html" },
-                        { text: "Scikit-learn Ensemble Methods", url: "https://scikit-learn.org/stable/modules/ensemble.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 29",
-                    tasks: "K-Means Clustering and Hierarchical Clustering implementation. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Clustering", url: "https://scikit-learn.org/stable/modules/clustering.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 30",
-                    tasks: "Dimensionality Reduction (PCA) and model evaluation metrics (accuracy, precision, recall, F1-score, confusion matrix). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Scikit-learn Decomposition", url: "https://scikit-learn.org/stable/modules/decomposition.html" },
-                        { text: "Scikit-learn Metrics", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Jul 31",
-                    tasks: "End-to-end small ML project (e.g., classification on a small dataset from Kaggle or UCI repository). Focus on data loading, preprocessing, model training, and evaluation. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "Kaggle", url: "https://www.kaggle.com/datasets" },
-                        { text: "UCI Machine Learning Repository", url: "https://archive.ics.uci.edu/ml/index.php" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                }
-            ],
-            "August 2025": [
-                {
-                    date: "Aug 1",
-                    tasks: "Python Project Structure: `setup.py`/`pyproject.toml`, virtual environments (venv, conda). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Real Python: Python Application Layouts", url: "https://realpython.com/python-application-layouts/" },
-                        { text: "Python venv Documentation", url: "https://docs.python.org/3/library/venv.html" },
-                        { text: "Conda Documentation", url: "https://docs.conda.io/en/latest/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 2",
-                    tasks: "Dependency Management: `pip` (requirements.txt), Poetry, `pipenv`. Create a small project and manage dependencies. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python Poetry", url: "https://python-poetry.org/" },
-                        { text: "Pipenv", url: "https://pipenv.pypa.io/en/latest/" },
-                        { text: "Real Python: Pipenv Guide", url: "https://realpython.com/pipenv-guide/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 3",
-                    tasks: "Unit Testing with `unittest`. Write tests for a simple Python module. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python unittest Documentation", url: "https://docs.python.org/3/library/unittest.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 4",
-                    tasks: "Unit Testing with `pytest`. Learn `pytest` fixtures, assertions. Convert `unittest` tests to `pytest`. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" },
-                        { text: "Real Python: Pytest Tutorial", url: "https://realpython.com/pytest-python/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 5",
-                    tasks: "Integration Testing concepts. Learn about mock objects for testing external dependencies. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python unittest.mock Documentation", url: "https://docs.python.org/3/library/unittest.mock.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 6",
-                    tasks: "Logging: Python's `logging` module. Implement effective logging in a sample application. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python logging Documentation", url: "https://docs.python.org/3/library/logging.html" },
-                        { text: "Real Python: Logging Tutorial", url: "https://realpython.com/python-logging/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 7",
-                    tasks: "Code Quality: Linters (Flake8, Black). Set up linters for your Python projects and practice code formatting. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Flake8 Documentation", url: "https://flake8.pycqa.org/en/latest/" },
-                        { text: "Black Documentation", url: "https://github.com/psf/black" },
-                        { text: "Real Python: Code Style", url: "https://realpython.com/python-pep8/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 8",
-                    tasks: "API Development: Introduction to Flask (basic routes, request/response). Build a simple 'Hello World' API. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Flask Documentation", url: "https://flask.palletsprojects.com/en/latest/" },
-                        { text: "Real Python: Flask Tutorial", url: "https://realpython.com/flask-by-example-implementing-a-restful-api/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 9",
-                    tasks: "FastAPI: Introduction, advantages over Flask (async, data validation). Build a simple REST API. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
-                        { text: "Real Python: FastAPI Tutorial", url: "https://realpython.com/fastapi-python-web-apis/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 10",
-                    tasks: "FastAPI: Data validation with Pydantic, handling request bodies, path parameters. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
-                        { text: "Pydantic Documentation", url: "https://pydantic-docs.helpmanual.io/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 11",
-                    tasks: "Deploy a simple ML model as a web service using FastAPI (e.g., a pre-trained Scikit-learn model). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
-                        { text: "Scikit-learn Model Persistence", url: "https://scikit-learn.org/stable/modules/model_persistence.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 12",
-                    tasks: "Concurrency: Threads vs. Processes. Introduction to Python's `threading` and `multiprocessing` modules. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python threading Documentation", url: "https://docs.python.org/3/library/threading.html" },
-                        { text: "Python multiprocessing Documentation", url: "https://docs.python.org/3/library/multiprocessing.html" },
-                        { text: "Real Python: Concurrency", url: "https://realpython.com/python-concurrency/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 13",
-                    tasks: "Asynchronous programming with `asyncio`. Understand `async`/`await` for I/O-bound tasks. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python asyncio Documentation", url: "https://docs.python.org/3/library/asyncio.html" },
-                        { text: "Real Python: Async IO", url: "https://realpython.com/async-io-python/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 14",
-                    tasks: "Code Quality: Type Hinting (`mypy`). Add type hints to your Python projects and use `mypy` for static analysis. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Python Type Hinting Documentation", url: "https://docs.python.org/3/library/typing.html" },
-                        { text: "Mypy Documentation", url: "https://mypy.readthedocs.io/en/stable/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 15",
-                    tasks: "Start fast.ai's 'Practical Deep Learning for Coders'. Introduction to PyTorch, Tensors. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 16",
-                    tasks: "Neural Network basics with PyTorch (Linear Layers, Activations). Build a simple classification model. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 17",
-                    tasks: "Training loop, Loss Functions, Optimizers. Train your first neural network on a simple dataset. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 18",
-                    tasks: "Convolutional Neural Networks (CNNs) for Image Classification. Understand convolution, pooling layers. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 19",
-                    tasks: "Implement a simple CNN with PyTorch for a dataset like MNIST or CIFAR-10. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "MNIST Dataset", url: "http://yann.lecun.com/exdb/mnist/" },
-                        { text: "CIFAR-10 Dataset", url: "https://www.cs.toronto.edu/~kriz/cifar.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 20",
-                    tasks: "Transfer Learning with pre-trained CNNs (e.g., ResNet, VGG). Fine-tuning for a custom dataset. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "PyTorch Models", url: "https://pytorch.org/vision/main/models.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 21",
-                    tasks: "Introduction to Recurrent Neural Networks (RNNs) for sequence data (basic concepts). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 22",
-                    tasks: "'The Missing Semester of Your CS Education' (MIT): Focus on 'Version Control (Git)' module. Understand Git basics: `init`, `add`, `commit`. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
-                        { text: "Git Documentation", url: "https://git-scm.com/doc" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 23",
-                    tasks: "Git branching (`branch`, `checkout`, `merge`). Practice creating branches, merging, resolving conflicts. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
-                        { text: "Git Branching", url: "https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 24",
-                    tasks: "Remote repositories (`push`, `pull`, `clone`). Practice working with GitHub. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
-                        { text: "GitHub Docs", url: "https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 25",
-                    tasks: "Pull Requests (PRs) on GitHub: creating PRs, reviewing, merging. Practice submitting PRs to your own repositories. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Official GitHub Guides - About Pull Requests", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 26",
-                    tasks: "Git commands: `rebase`, `stash`, `log`, `diff`. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Git Rebase", url: "https://git-scm.com/docs/git-rebase" },
-                        { text: "Git Stash", url: "https://git-scm.com/docs/git-stash" },
-                        { text: "Git Log", url: "https://git-scm.com/docs/git-log" },
-                        { text: "Git Diff", url: "https://git-scm.com/docs/git-diff" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 27",
-                    tasks: "Collaborative workflows on GitHub (forking, contributing to open-source projects - theoretical). Set up personal projects on GitHub for Java DSA and Python AI/ML work. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "GitHub Fork a Repo", url: "https://docs.github.com/en/get-started/quickstart/contributing-to-projects" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 28",
-                    tasks: "Practice daily commits, branching, merging, and submitting pull requests to your own repositories. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "GitHub Docs", url: "https://docs.github.com/en" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                }
-            ],
-            "September 2025": [
-                {
-                    date: "Aug 29",
-                    tasks: "'The Missing Semester of Your CS Education' (MIT): Focus on 'Shell Tools and Scripting'. Basic Linux commands (`ls`, `cd`, `mkdir`, `rm`, `cp`, `mv`). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "The Missing Semester of Your CS Education - Shell Tools", url: "https://missing.csail.mit.edu/2020/shell-tools/" },
-                        { text: "Linux Commands Cheatsheet", url: "https://www.hostinger.in/tutorials/linux-commands" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 30",
-                    tasks: "File permissions (`chmod`), ownership (`chown`). Piping and redirection (`|`, `>`, `>>`). DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Linux File Permissions", url: "https://www.linuxfoundation.org/blog/how-to-manage-file-permissions-on-linux/" },
-                        { text: "Linux I/O Redirection", url: "https://ryanstutorials.net/linuxtutorial/redirection.php" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Aug 31",
-                    tasks: "Shell scripting basics (variables, loops, conditionals). Write simple scripts. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "Shell Scripting Tutorial", url: "https://ryanstutorials.net/linuxtutorial/bashscripting.php" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Sep 1",
-                    tasks: "Professional IDE Usage: PyCharm for Python. Master debugging, refactoring, code navigation. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
-                        { text: "PyCharm Debugging", url: "https://www.jetbrains.com/help/pycharm/debugging-code.html" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Sep 2",
-                    tasks: "IntelliJ IDEA for Java. Debugging, refactoring, Maven/Gradle basics. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
-                        { text: "IntelliJ IDEA Debugging", url: "https://www.jetbrains.com/help/idea/debugging-code.html" },
-                        { text: "Maven", url: "https://maven.apache.org/" },
-                        { text: "Gradle", url: "https://gradle.org/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Sep 3",
-                    tasks: "VS Code for both. Extensions for Python/Java, integrated terminal usage. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs" },
-                        { text: "VS Code Python Extension", url: "https://marketplace.visualstudio.com/items?itemName=ms-python.python" },
-                        { text: "VS Code Java Extension Pack", url: "https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Sep 4",
-                    tasks: "Practice using IDEs for your ongoing DSA and Python projects. Get comfortable with basic build tools for each language. DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
-                    resources: [
-                        { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
-                        { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
-                        { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" }
-                    ]
-                },
-                {
-                    date: "Sep 5 - Sep 25",
-                    tasks: "Allocate time based on your strengths and weaknesses. **DSA (Java):** Push beyond 500 LeetCode problems. Focus heavily on Medium and Hard difficulties. Participate in 2 competitive programming contests per week. Practice diverse problem types. **Python AI/ML & Dev:** Work on 1-2 small personal projects that integrate your Python AI/ML skills with general software development practices (e.g., a simple web app that uses a trained ML model, a data analysis tool with a CLI). Apply learned best practices: packaging, testing, logging, Git. **Review:** Revisit areas where you struggled. Use CLRS selectively for deep theoretical references if needed.",
-                    resources: [
-                        { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
-                        { text: "LeetCode", url: "https://leetcode.com/" },
-                        { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
-                        { text: "NeetCode.io (Free/Paid)", url: "https://neetcode.io/" },
-                        { text: "Codeforces", url: "https://codeforces.com/" },
-                        { text: "AtCoder", url: "https://atcoder.jp/" },
-                        { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
-                        { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
-                        { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
-                        { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
-                        { text: "The Complete Python Developer in 202X: Zero to Mastery (Udemy)", url: "https://www.udemy.com/course/complete-python-developer-zero-to-mastery/" },
-                        { text: "Real Python", url: "https://realpython.com/" },
-                        { text: "ArjanCodes YouTube Channel", url: "https://www.youtube.com/@ArjanCodes" },
-                        { text: "Official Python Documentation", url: "https://docs.python.org/3/" },
-                        { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" },
-                        { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" },
-                        { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" },
-                        { text: "TensorFlow Documentation", url: "https://www.tensorflow.org/api_docs/python/tf" },
-                        { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
-                        { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
-                        { text: "Flask Documentation", url: "https://flask.palletsprojects.com/en/latest/" },
-                        { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" },
-                        { text: "The Missing Semester of Your CS Education", url: "https://missing.csail.mit.edu/" },
-                        { text: "Official GitHub Guides", url: "https://docs.github.com/en" },
-                        { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
-                        { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
-                        { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs/" },
-                        { text: "Introduction to Algorithms (CLRS) - Selective reading for theoretical reference", url: "https://mitpress.mit.edu/books/introduction-algorithms" }
-                    ]
-                }
-            ],
-            "October 2025": [
-                {
-                    date: "Sep 26 - Oct 23",
-                    tasks: "**DSA (Java):** Continue rigorous LeetCode and competitive programming practice. Aim for specific rating goals if you have them. **Python AI/ML & Dev:** Work on a slightly more complex personal project to showcase your capabilities. Start thinking about potential project ideas that combine your AI/ML skills with software engineering. **GSoC Organization Identification (Start browsing):** Spend 1-2 hours daily browsing the Google Summer of Code Official Website. Look at past accepted organizations (2023, 2024, 2025 archives). Filter for Python/AI projects. Create a preliminary list of 5-7 potential Python-based organizations.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website (Browse past years' archives)", url: "https://summerofcode.withgoogle.com/" }
-                    ]
-                }
-            ],
-            "November 2025": [
-                {
-                    date: "Oct 24 - Oct 30",
-                    tasks: "Finalize your list of 5-7 Python-based GSoC target organizations. For each, check community health (mailing lists, Discord/Slack, IRC). Locate 'contributing guidelines' / 'developer guide' for your top 2-3 organizations and read meticulously. Start setting up their development environment for your top 1-2 choices. Document any issues.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" },
-                        { text: "Target Organization's Developer/Contributing Documentation & Communication Channels (e.g., GitHub, mailing lists, Discord/Slack/IRC)", url: "#" }
-                    ]
-                },
-                {
-                    date: "Oct 31 - Nov 6",
-                    tasks: "Spend significant time reading and understanding the core architecture, design patterns, and main functionalities of your target Python codebase. Identify 'good first issues' or 'easy fixes' on their issue tracker. Join their primary communication channels. Introduce yourself. Start with documentation improvements, minor bugs, or missing tests. Aim for 1-2 merged PRs by end of week.",
-                    resources: [
-                        { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
-                        { text: "Issue Tracker", url: "https://github.com/issues" },
-                        { text: "Communication Channels (mailing lists, IRC, Discord/Slack)", url: "#" },
-                        { text: "opensource.guide", url: "https://opensource.guide/how-to-contribute/" }
-                    ]
-                },
-                {
-                    date: "Nov 7 - Nov 27",
-                    tasks: "Continue to identify and work on small, high-quality contributions. Read the backlog of community discussions. Ask smart questions. Provide helpful answers. Aim for a total of **3-5 merged Pull Requests (PRs)** by January 2026. Ensure each PR is well-tested, follows coding style, and has a clear commit message.",
-                    resources: [
-                        { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
-                        { text: "Communication Channels", url: "#" },
-                        { text: "GitHub Pull Request Documentation", url: "https://docs.github.com/en/pull-requests" }
-                    ]
-                }
-            ],
-            "December 2025": [
-                {
-                    date: "Nov 28 - Dec 25",
-                    tasks: "As your understanding grows, pick a slightly more involved bug fix or a small feature implementation in Python. Aim for 1-2 such substantial merged PRs by end of Feb. Proactively engage potential mentors. Discuss potential project ideas based on your contributions and understanding. Ask specific, valuable questions. Get early feedback on your GSoC project idea.",
-                    resources: [
-                        { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
-                        { text: "Communication Channels", url: "#" },
-                        { text: "Direct interaction with potential mentors (e.g., via email, Discord, IRC)", url: "#" }
-                    ]
-                }
-            ],
-            "January 2026": [
-                {
-                    date: "Dec 26 - Jan 1",
-                    tasks: "Continue working on substantial contributions. Monitor the GSoC Official Website for program announcements and timeline release. Keep refining your potential project ideas with mentor feedback.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
-                    ]
-                },
-                {
-                    date: "Jan 2 - Jan 8",
-                    tasks: "*Mid-January 2026: Official GSoC 2026 Program Announcement & Timeline Release.* Confirm your understanding of the official timeline. Continue with contributions and mentor engagement. *Late January 2026: Organization Applications Open.*",
-                    resources: [
-                        { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
-                    ]
-                },
-                {
-                    date: "Jan 9 - Jan 22",
-                    tasks: "Continue to work on substantial contributions (aim for your 1-2 substantial merged PRs). Keep engaging with mentors and refining your project idea based on their feedback.",
-                    resources: [
-                        { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
-                        { text: "Communication Channels", url: "#" },
-                        { text: "Mentors", url: "#" }
-                    ]
-                }
-            ],
-            "February 2026": [
-                {
-                    date: "Jan 23 - Jan 29",
-                    tasks: "Ensure your substantial merged PRs are completed. Continue active communication and idea refinement with potential mentors. *Mid-February 2026: Organization Application Deadline.*",
-                    resources: [
-                        { text: "Target Organization's GitHub Repository", url: "https://github.com/" }
-                    ]
-                },
-                {
-                    date: "Jan 30 - Feb 5",
-                    tasks: "*Late February 2026: Accepted Organizations Announced.* Confirm your target Python-based organization(s) from the officially accepted list. If your primary choice isn't accepted, pivot immediately to your backup. Review their official GSoC idea list. Select 1-2 organizations and projects to focus on for proposal writing.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
-                    ]
-                },
-                {
-                    date: "Feb 6 - Feb 26",
-                    tasks: "Begin structuring your proposal according to GSoC guidelines. Craft a compelling Title & Abstract. Include your Information (contact, GitHub, location/timezone). Write a Detailed Problem Statement. Share early drafts with potential mentors for feedback.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" },
-                        { text: "Your chosen organization's GSoC ideas list", url: "#" }
-                    ]
-                }
-            ],
-            "March 2026": [
-                {
-                    date: "Feb 27 - Mar 5",
-                    tasks: "Develop a Detailed Proposed Solution (Technical Deep Dive - Python Development Focus). Include Architecture & Design (diagrams). Provide Technical Breakdown (specific modules, algorithms, data structures). Detail AI/ML Specifics (if applicable). Detail Software Development Specifics. Send this section to mentors for critical feedback.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
-                    ]
-                },
-                {
-                    date: "Mar 6 - Mar 12",
-                    tasks: "Discuss Alternative Approaches and justify your chosen solution. Detail the Impact on Existing System. Start drafting your Detailed Weekly Timeline (initial breakdown of coding period tasks). Seek mentor feedback diligently.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
-                    ]
-                },
-                {
-                    date: "Mar 13 - Mar 19",
-                    tasks: "Refine the Detailed Weekly Timeline to be extremely granular (including Community Bonding period). Define your Test Plan (unit/integration tests, Python testing frameworks, ML testing strategies). Write your 'About Me' section, highlighting strengths (Java DSA, math aptitude, learning pace) and *crucially* listing pre-GSoC contributions with direct links to merged PRs/commits.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
-                    ]
-                },
-                {
-                    date: "Mar 20 - Mar 26",
-                    tasks: "Add 'Benefits to the Organization' and 'Future Work/Maintenance Plan'. Review for Clarity & Conciseness. Ensure Professionalism (grammar, spelling, formatting). Perform a thorough self-review and get a trusted peer to review for clarity and errors.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
-                    ]
-                }
-            ],
-            "April 2026": [
-                {
-                    date: "Mar 27 - Apr 2",
-                    tasks: "*Late March 2026: Contributor Proposals Open.* Send final drafts of your proposal to your potential mentors. Incorporate their feedback diligently. **Early Submission:** Aim to submit your proposal at least 24-48 hours before the absolute deadline (historically around April 8th). Account for time zone differences (IST considerations) and last-minute tech issues.",
-                    resources: [
-                        { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" },
-                        { text: "GSoC platform for submission", url: "https://summerofcode.withgoogle.com/" },
-                        { text: "Mentors", url: "#" }
-                    ]
-                }
-            ],
-            "May 2026": [
-                {
-                    date: "May 1 - May 28",
-                    tasks: "Formalize your development environment and gain access to organization resources. Have in-depth discussions with your mentor to clarify any ambiguities in your project plan and set detailed weekly goals. Set up regular communication channels (e.g., weekly video calls, daily chat updates). Begin preparatory tasks: setting up test environments, reading more code, writing initial documentation.",
-                    resources: [
-                        { text: "Target Organization's Development Environment", url: "#" },
-                        { text: "Mentor", url: "#" },
-                        { text: "Communication Channels (Discord/Slack/IRC, Email)", url: "#" },
-                        { text: "Project Documentation", url: "#" }
-                    ]
-                }
-            ],
-            "June - August 2026 (Coding Period)": [
-                {
-                    date: "May 29 - Aug 18",
-                    tasks: "**Rigorous Adherence to Timeline:** Strive to meet your weekly milestones. **Consistent Communication:** Daily short updates on progress, current work, blockers. Weekly detailed reports (progress, challenges, solutions, next plan). **Never go silent.** **Clean Code & Tests:** Write high-quality, well-documented Python code. Write comprehensive unit and integration tests as you go. **Regular Commits & Pull Requests:** Push code frequently with clear, descriptive commit messages. Create PRs for mentor review regularly. **Seek Help Proactively:** If stuck for more than a few hours, reach out to your mentor. **Be Flexible:** Adapt to evolving requirements. Ensure your mid-term deliverable is met.",
-                    resources: [
-                        { text: "Your Project Proposal", url: "#" },
-                        { text: "Target Organization's Git Repository", url: "https://github.com/" },
-                        { text: "Communication Channels (Discord/Slack/IRC, Email, Video Calls)", url: "#" },
-                        { text: "Mentor", url: "#" },
-                        { text: "Code Editor/IDE", url: "#" },
-                        { text: "Testing Frameworks (e.g., pytest)", url: "https://docs.pytest.org/en/stable/" },
-                        { text: "Linting tools (e.g., Flake8, Black)", url: "https://flake8.pycqa.org/en/latest/" }
-                    ]
-                }
-            ],
-            "Late August 2026": [
-                {
-                    date: "Aug 19 - Aug 25",
-                    tasks: "Final documentation, code cleanup, final bug fixes.",
-                    resources: [
-                        { text: "Project Documentation", url: "#" },
-                        { text: "Code Repository", url: "https://github.com/" }
-                    ]
-                }
-            ]
-        };
-
-        const monthSelect = document.getElementById('month-select');
-        const dailyPlanContent = document.getElementById('daily-plan-content');
-
-        const populateMonthSelect = () => {
-            for (const month in dailyPlanData) {
-                const option = document.createElement('option');
-                option.value = month;
-                option.textContent = month;
-                monthSelect.appendChild(option);
+        const allDailyTasks = [
+            {
+                id: "2025-06-20",
+                date: "Jun 20",
+                tasks: [
+                    "Review Graph basics (Adjacency List/Matrix, Traversal).",
+                    "Start Striver's TakeUForward Graph playlist/sheets (video explanations).",
+                    "Python AI/ML: Begin 'Python for Data Science and Machine Learning Bootcamp' (Udemy, Jose Portilla) - Focus on basic Python syntax review and introduction to NumPy."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp (Udemy, Jose Portilla)", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" }
+                ]
+            },
+            {
+                id: "2025-06-21",
+                date: "Jun 21",
+                tasks: [
+                    "Continue with BFS/DFS implementations and variations (e.g., Cycle Detection) in Java.",
+                    "Practice 3-4 problems on LeetCode (easy/medium).",
+                    "Python AI/ML: Continue Udemy course, focusing on NumPy."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" }
+                ]
+            },
+            {
+                id: "2025-06-22",
+                date: "Jun 22",
+                tasks: [
+                    "Introduce Dijkstra's Algorithm (video explanation).",
+                    "Understand the greedy approach and implementation.",
+                    "Practice 2 problems.",
+                    "Python AI/ML: Continue Udemy course, focusing on NumPy and early Pandas."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" }
+                ]
+            },
+            {
+                id: "2025-06-23",
+                date: "Jun 23",
+                tasks: [
+                    "Work on Bellman-Ford and Floyd-Warshall (video explanations).",
+                    "Understand their applications and differences from Dijkstra.",
+                    "Practice 2 problems.",
+                    "Python AI/ML: Continue Udemy course, focusing on Pandas."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" }
+                ]
+            },
+            {
+                id: "2025-06-24",
+                date: "Jun 24",
+                tasks: [
+                    "Start with Minimum Spanning Trees (MSTs) - Prim's Algorithm (video explanation).",
+                    "Implementation and practice.",
+                    "Python AI/ML: Continue Udemy course, focusing on Matplotlib/Seaborn basics."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "Matplotlib Documentation", url: "https://matplotlib.org/stable/contents.html" },
+                    { text: "Seaborn Documentation", url: "https://seaborn.pydata.org/" }
+                ]
+            },
+            {
+                id: "2025-06-25",
+                date: "Jun 25",
+                tasks: [
+                    "Kruskal's Algorithm for MSTs (video explanation).",
+                    "Understand Disjoint Set Union (DSU) needed for Kruskal's.",
+                    "Practice 2 MST problems.",
+                    "Python AI/ML: Continue Udemy course, focusing on Matplotlib/Seaborn basics."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" }
+                ]
+            },
+            {
+                id: "2025-06-26",
+                date: "Jun 26",
+                tasks: [
+                    "Review all Graph algorithms covered this week.",
+                    "Solve 3-4 mixed Graph problems on LeetCode/AlgoExpert.",
+                    "Python AI/ML: Finish introductory sections of Udemy course, ensuring basic familiarity with NumPy, Pandas, Matplotlib/Seaborn."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" }
+                ]
+            },
+            {
+                id: "2025-06-27",
+                date: "Jun 27",
+                tasks: [
+                    "Introduction to Dynamic Programming (video explanation).",
+                    "Understand memoization vs. tabulation.",
+                    "Start with basic 1D DP problems (e.g., Fibonacci, climbing stairs).",
+                    "Python AI/ML: Start Andrew Ng's Machine Learning Course (Coursera) - Focus on foundational concepts and mathematical understanding of ML (Supervised Learning, Linear Regression)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Andrew Ng's Machine Learning Course (Coursera)", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-06-28",
+                date: "Jun 28",
+                tasks: [
+                    "DP on Grids (e.g., unique paths, minimum path sum).",
+                    "Practice 3 problems.",
+                    "Python AI/ML: Andrew Ng's ML Course - Gradient Descent, Multivariate Linear Regression."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io (Free/Paid)", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-06-29",
+                date: "Jun 29",
+                tasks: [
+                    "DP on Sequences/Arrays (e.g., Longest Common Subsequence, Longest Increasing Subsequence).",
+                    "Practice 3 problems.",
+                    "Python AI/ML: Andrew Ng's ML Course - Logistic Regression, Regularization."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-06-30",
+                date: "Jun 30",
+                tasks: [
+                    "Knapsack Problem variations (0/1 Knapsack, Unbounded Knapsack).",
+                    "Practice 2-3 problems.",
+                    "Python AI/ML: Andrew Ng's ML Course - Neural Networks (basic architecture, backpropagation intuition)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-07-01",
+                date: "Jul 1",
+                tasks: [
+                    "DP on Strings (e.g., Edit Distance, Palindromic Subsequences).",
+                    "Practice 2-3 problems.",
+                    "Python AI/ML: Andrew Ng's ML Course - Support Vector Machines (SVMs) - intuition."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-07-02",
+                date: "Jul 2",
+                tasks: [
+                    "Tree DP patterns.",
+                    "Practice 2 problems.",
+                    "Python AI/ML: Andrew Ng's ML Course - Unsupervised Learning (Clustering - K-Means), Dimensionality Reduction (PCA)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-07-03",
+                date: "Jul 3",
+                tasks: [
+                    "Mixed DP problems from LeetCode Medium/Hard. Focus on problem recognition and applying appropriate patterns.",
+                    "Python AI/ML: Andrew Ng's ML Course - Anomaly Detection, Recommender Systems. Review key concepts and assignments (port concepts to Python if possible)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "NeetCode.io", url: "https://neetcode.io/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" }
+                ]
+            },
+            {
+                id: "2025-07-04",
+                date: "Jul 4",
+                tasks: [
+                    "Review Binary Search Trees (BSTs) and start Balanced BSTs (AVL/Red-Black Tree concepts, no deep implementation yet).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: Start 'Machine Learning A-Z™: AI, Python & R Data Science' (Udemy) - Data Preprocessing."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science (Udemy, Kirill Eremenko & Hadelin de Ponteves)", url: "https://www.udemy.com/course/machinelearning/" }
+                ]
+            },
+            {
+                id: "2025-07-05",
+                date: "Jul 5",
+                tasks: [
+                    "Heaps (Min/Max Heap implementation from scratch or using `PriorityQueue`).",
+                    "Practice 3-4 problems (e.g., Kth largest element, merge k sorted lists).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: Implement Linear Regression and Logistic Regression (Scikit-learn)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
+                ]
+            },
+            {
+                id: "2025-07-06",
+                date: "Jul 6",
+                tasks: [
+                    "Tries (Prefix Tree) implementation.",
+                    "Practice problems involving string searching/prefix matching.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: Implement K-Nearest Neighbors (KNN) and Support Vector Machines (SVMs) using Scikit-learn."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
+                ]
+            },
+            {
+                id: "2025-07-07",
+                date: "Jul 7",
+                tasks: [
+                    "Segment Trees (introduction, range query, point update).",
+                    "Understand the structure and build process.",
+                    "Practice 2 problems.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: Decision Trees and Random Forests implementation with Scikit-learn."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
+                ]
+            },
+            {
+                id: "2025-07-08",
+                date: "Jul 8",
+                tasks: [
+                    "Segment Trees (range update, lazy propagation).",
+                    "Practice 2 problems.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: K-Means Clustering and Hierarchical Clustering implementation."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
+                ]
+            },
+            {
+                id: "2025-07-09",
+                date: "Jul 9",
+                tasks: [
+                    "Fenwick Trees (BIT - Binary Indexed Tree).",
+                    "Understand applications for prefix sums and updates.",
+                    "Practice 2 problems.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: Dimensionality Reduction (PCA) and model evaluation metrics."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" }
+                ]
+            },
+            {
+                id: "2025-07-10",
+                date: "Jul 10",
+                tasks: [
+                    "Mixed problems focusing on Trees, Heaps, and Tries from LeetCode Hard.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week.",
+                    "Python AI/ML: End-to-end small ML project."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Kaggle", url: "https://www.kaggle.com/datasets" },
+                    { text: "UCI Machine Learning Repository", url: "https://archive.ics.uci.edu/ml/index.php" }
+                ]
+            },
+            {
+                id: "2025-07-11",
+                date: "Jul 11",
+                tasks: [
+                    "Number Theory: Primes (Sieve of Eratosthenes), GCD, LCM, Modular Arithmetic.",
+                    "Practice 3-4 problems.",
+                    "Python AI/ML: Start 'The Complete Python Developer in 202X: Zero to Mastery' (Udemy) or similar – Focus on Python Project Structure (setup.py/pyproject.toml, virtual environments)."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "The Complete Python Developer in 202X: Zero to Mastery (Udemy)", url: "https://www.udemy.com/course/complete-python-developer-zero-to-mastery/" },
+                    { text: "Real Python: Python Packaging", url: "https://realpython.com/python-application-layouts/" }
+                ]
+            },
+            {
+                id: "2025-07-12",
+                date: "Jul 12",
+                tasks: [
+                    "Bit Manipulation: Basic operations (AND, OR, XOR, NOT), Bit Masks, Power of 2, Counting set bits.",
+                    "Practice 3-4 problems.",
+                    "Python AI/ML: Dependency Management (pip, Poetry, pipenv). Create a small project and manage dependencies."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Real Python: Pipenv", url: "https://realpython.com/pipenv-guide/" },
+                    { text: "Poetry Documentation", url: "https://python-poetry.org/docs/" }
+                ]
+            },
+            {
+                id: "2025-07-13",
+                date: "Jul 13",
+                tasks: [
+                    "More advanced Bit Manipulation techniques.",
+                    "Practice 2-3 problems.",
+                    "Python AI/ML: Unit Testing with `unittest`. Write tests for a simple Python module."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python unittest Documentation", url: "https://docs.python.org/3/library/unittest.html" }
+                ]
+            },
+            {
+                id: "2025-07-14",
+                date: "Jul 14",
+                tasks: [
+                    "Competitive Programming: Introduction to Codeforces/AtCoder. Participate in a Div 2 (Codeforces) or Beginner (AtCoder) contest. Focus on understanding the platform and time management.",
+                    "Python AI/ML: Unit Testing with `pytest`. Learn `pytest` fixtures, assertions. Convert `unittest` tests to `pytest`."
+                ],
+                resources: [
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" },
+                    { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" }
+                ]
+            },
+            {
+                id: "2025-07-15",
+                date: "Jul 15",
+                tasks: [
+                    "Analyze contest problems, learn from editorials.",
+                    "Solve 3-4 additional LeetCode Medium/Hard problems on advanced DSA topics.",
+                    "Python AI/ML: Integration Testing concepts. Learn about mock objects for testing external dependencies."
+                ],
+                resources: [
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Python unittest.mock Documentation", url: "https://docs.python.org/3/library/unittest.mock.html" }
+                ]
+            },
+            {
+                id: "2025-07-16",
+                date: "Jul 16",
+                tasks: [
+                    "Participate in another competitive programming contest.",
+                    "Python AI/ML: Logging: Python's `logging` module. Implement effective logging in a sample application."
+                ],
+                resources: [
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" },
+                    { text: "Python logging Documentation", url: "https://docs.python.org/3/library/logging.html" }
+                ]
+            },
+            {
+                id: "2025-07-17",
+                date: "Jul 17",
+                tasks: [
+                    "Analyze contest problems and solidify understanding of advanced DSA through practice.",
+                    "Python AI/ML: Code Quality: Linters (Flake8, Black). Set up linters for your Python projects and practice code formatting."
+                ],
+                resources: [
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" },
+                    { text: "Flake8 Documentation", url: "https://flake8.pycqa.org/en/latest/" },
+                    { text: "Black Documentation", url: "https://github.com/psf/black" }
+                ]
+            },
+            {
+                id: "2025-07-18",
+                date: "Jul 18",
+                tasks: [
+                    "Andrew Ng's ML Course: Supervised Learning Introduction, Linear Regression (theory and cost function).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-19",
+                date: "Jul 19",
+                tasks: [
+                    "Andrew Ng's ML Course: Gradient Descent, Multivariate Linear Regression.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-20",
+                date: "Jul 20",
+                tasks: [
+                    "Andrew Ng's ML Course: Logistic Regression, Regularization.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-21",
+                date: "Jul 21",
+                tasks: [
+                    "Andrew Ng's ML Course: Neural Networks (basic architecture, backpropagation intuition).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-22",
+                date: "Jul 22",
+                tasks: [
+                    "Andrew Ng's ML Course: Support Vector Machines (SVMs) - intuition.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-23",
+                date: "Jul 23",
+                tasks: [
+                    "Andrew Ng's ML Course: Unsupervised Learning (Clustering - K-Means), Dimensionality Reduction (PCA).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-24",
+                date: "Jul 24",
+                tasks: [
+                    "Andrew Ng's ML Course: Anomaly Detection, Recommender Systems. Review key concepts and assignments (port concepts to Python if possible).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-25",
+                date: "Jul 25",
+                tasks: [
+                    "Start 'Machine Learning A-Z™: AI, Python & R Data Science' (Udemy).",
+                    "Focus on data preprocessing techniques (handling missing data, encoding categorical data, feature scaling).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science (Udemy, Kirill Eremenko & Hadelin de Ponteves)", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Preprocessing", url: "https://scikit-learn.org/stable/modules/preprocessing.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-26",
+                date: "Jul 26",
+                tasks: [
+                    "Implement Linear Regression and Logistic Regression from scratch (or using NumPy) and then using Scikit-learn.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Linear Models", url: "https://scikit-learn.org/stable/modules/linear_model.html" },
+                    { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-27",
+                date: "Jul 27",
+                tasks: [
+                    "Implement K-Nearest Neighbors (KNN) and Support Vector Machines (SVMs) using Scikit-learn.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Neighbors", url: "https://scikit-learn.org/stable/modules/neighbors.html" },
+                    { text: "Scikit-learn SVM", url: "https://scikit-learn.org/stable/modules/svm.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-28",
+                date: "Jul 28",
+                tasks: [
+                    "Decision Trees and Random Forests implementation with Scikit-learn.",
+                    "Understand ensemble methods.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Tree Models", url: "https://scikit-learn.org/stable/modules/tree.html" },
+                    { text: "Scikit-learn Ensemble Methods", url: "https://scikit-learn.org/stable/modules/ensemble.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-29",
+                date: "Jul 29",
+                tasks: [
+                    "K-Means Clustering and Hierarchical Clustering implementation.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Clustering", url: "https://scikit-learn.org/stable/modules/clustering.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-30",
+                date: "Jul 30",
+                tasks: [
+                    "Dimensionality Reduction (PCA) and model evaluation metrics (accuracy, precision, recall, F1-score, confusion matrix).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Scikit-learn Decomposition", url: "https://scikit-learn.org/stable/modules/decomposition.html" },
+                    { text: "Scikit-learn Metrics", url: "https://scikit-learn.org/stable/modules/model_evaluation.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-07-31",
+                date: "Jul 31",
+                tasks: [
+                    "End-to-end small ML project (e.g., classification on a small dataset from Kaggle or UCI repository).",
+                    "Focus on data loading, preprocessing, model training, and evaluation.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "Kaggle", url: "https://www.kaggle.com/datasets" },
+                    { text: "UCI Machine Learning Repository", url: "https://archive.ics.uci.edu/ml/index.php" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-01",
+                date: "Aug 1",
+                tasks: [
+                    "Python Project Structure: `setup.py`/`pyproject.toml`, virtual environments (venv, conda).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Real Python: Python Application Layouts", url: "https://realpython.com/python-application-layouts/" },
+                    { text: "Python venv Documentation", url: "https://docs.python.org/3/library/venv.html" },
+                    { text: "Conda Documentation", url: "https://docs.conda.io/en/latest/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-02",
+                date: "Aug 2",
+                tasks: [
+                    "Dependency Management: `pip` (requirements.txt), Poetry, `pipenv`.",
+                    "Create a small project and manage dependencies.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python Poetry", url: "https://python-poetry.org/" },
+                    { text: "Pipenv", url: "https://pipenv.pypa.io/en/latest/" },
+                    { text: "Real Python: Pipenv Guide", url: "https://realpython.com/pipenv-guide/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-03",
+                date: "Aug 3",
+                tasks: [
+                    "Unit Testing with `unittest`.",
+                    "Write tests for a simple Python module.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python unittest Documentation", url: "https://docs.python.org/3/library/unittest.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-04",
+                date: "Aug 4",
+                tasks: [
+                    "Unit Testing with `pytest`.",
+                    "Learn `pytest` fixtures, assertions.",
+                    "Convert `unittest` tests to `pytest`.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" },
+                    { text: "Real Python: Pytest Tutorial", url: "https://realpython.com/pytest-python/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-05",
+                date: "Aug 5",
+                tasks: [
+                    "Integration Testing concepts.",
+                    "Learn about mock objects for testing external dependencies.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python unittest.mock Documentation", url: "https://docs.python.org/3/library/unittest.mock.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-06",
+                date: "Aug 6",
+                tasks: [
+                    "Logging: Python's `logging` module.",
+                    "Implement effective logging in a sample application.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python logging Documentation", url: "https://docs.python.org/3/library/logging.html" },
+                    { text: "Real Python: Logging Tutorial", url: "https://realpython.com/python-logging/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-07",
+                date: "Aug 7",
+                tasks: [
+                    "Code Quality: Linters (Flake8, Black).",
+                    "Set up linters for your Python projects and practice code formatting.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Flake8 Documentation", url: "https://flake8.pycqa.org/en/latest/" },
+                    { text: "Black Documentation", url: "https://github.com/psf/black" },
+                    { text: "Real Python: Code Style", url: "https://realpython.com/python-pep8/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-08",
+                date: "Aug 8",
+                tasks: [
+                    "API Development: Introduction to Flask (basic routes, request/response).",
+                    "Build a simple 'Hello World' API.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Flask Documentation", url: "https://flask.palletsprojects.com/en/latest/" },
+                    { text: "Real Python: Flask Tutorial", url: "https://realpython.com/flask-by-example-implementing-a-restful-api/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-09",
+                date: "Aug 9",
+                tasks: [
+                    "FastAPI: Introduction, advantages over Flask (async, data validation).",
+                    "Build a simple REST API.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
+                    { text: "Real Python: FastAPI Tutorial", url: "https://realpython.com/fastapi-python-web-apis/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-10",
+                date: "Aug 10",
+                tasks: [
+                    "FastAPI: Data validation with Pydantic, handling request bodies, path parameters.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
+                    { text: "Pydantic Documentation", url: "https://pydantic-docs.helpmanual.io/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-11",
+                date: "Aug 11",
+                tasks: [
+                    "Deploy a simple ML model as a web service using FastAPI (e.g., a pre-trained Scikit-learn model).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
+                    { text: "Scikit-learn Model Persistence", url: "https://scikit-learn.org/stable/modules/model_persistence.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-12",
+                date: "Aug 12",
+                tasks: [
+                    "Concurrency: Threads vs. Processes.",
+                    "Introduction to Python's `threading` and `multiprocessing` modules.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python threading Documentation", url: "https://docs.python.org/3/library/threading.html" },
+                    { text: "Python multiprocessing Documentation", url: "https://docs.python.org/3/library/multiprocessing.html" },
+                    { text: "Real Python: Concurrency", url: "https://realpython.com/python-concurrency/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-13",
+                date: "Aug 13",
+                tasks: [
+                    "Asynchronous programming with `asyncio`.",
+                    "Understand `async`/`await` for I/O-bound tasks.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python asyncio Documentation", url: "https://docs.python.org/3/library/asyncio.html" },
+                    { text: "Real Python: Async IO", url: "https://realpython.com/async-io-python/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-14",
+                date: "Aug 14",
+                tasks: [
+                    "Code Quality: Type Hinting (`mypy`).",
+                    "Add type hints to your Python projects and use `mypy` for static analysis.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Python Type Hinting Documentation", url: "https://docs.python.org/3/library/typing.html" },
+                    { text: "Mypy Documentation", url: "https://mypy.readthedocs.io/en/stable/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-15",
+                date: "Aug 15",
+                tasks: [
+                    "Start fast.ai's 'Practical Deep Learning for Coders'.",
+                    "Introduction to PyTorch, Tensors.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-16",
+                date: "Aug 16",
+                tasks: [
+                    "Neural Network basics with PyTorch (Linear Layers, Activations).",
+                    "Build a simple classification model.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-17",
+                date: "Aug 17",
+                tasks: [
+                    "Training loop, Loss Functions, Optimizers.",
+                    "Train your first neural network on a simple dataset.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-18",
+                date: "Aug 18",
+                tasks: [
+                    "Convolutional Neural Networks (CNNs) for Image Classification.",
+                    "Understand convolution, pooling layers.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-19",
+                date: "Aug 19",
+                tasks: [
+                    "Implement a simple CNN with PyTorch for a dataset like MNIST or CIFAR-10.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "MNIST Dataset", url: "http://yann.lecun.com/exdb/mnist/" },
+                    { text: "CIFAR-10 Dataset", url: "https://www.cs.toronto.edu/~kriz/cifar.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-20",
+                date: "Aug 20",
+                tasks: [
+                    "Transfer Learning with pre-trained CNNs (e.g., ResNet, VGG).",
+                    "Fine-tuning for a custom dataset.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "PyTorch Models", url: "https://pytorch.org/vision/main/models.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-21",
+                date: "Aug 21",
+                tasks: [
+                    "Introduction to Recurrent Neural Networks (RNNs) for sequence data (basic concepts).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-22",
+                date: "Aug 22",
+                tasks: [
+                    "'The Missing Semester of Your CS Education' (MIT): Focus on 'Version Control (Git)' module.",
+                    "Understand Git basics: `init`, `add`, `commit`.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
+                    { text: "Git Documentation", url: "https://git-scm.com/doc" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-23",
+                date: "Aug 23",
+                tasks: [
+                    "Git branching (`branch`, `checkout`, `merge`).",
+                    "Practice creating branches, merging, resolving conflicts.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
+                    { text: "Git Branching", url: "https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-24",
+                date: "Aug 24",
+                tasks: [
+                    "Remote repositories (`push`, `pull`, `clone`).",
+                    "Practice working with GitHub.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "The Missing Semester of Your CS Education - Git", url: "https://missing.csail.mit.edu/2020/version-control/" },
+                    { text: "GitHub Docs", url: "https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-25",
+                date: "Aug 25",
+                tasks: [
+                    "Pull Requests (PRs) on GitHub: creating PRs, reviewing, merging.",
+                    "Practice submitting PRs to your own repositories.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Official GitHub Guides - About Pull Requests", url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-26",
+                date: "Aug 26",
+                tasks: [
+                    "Git commands: `rebase`, `stash`, `log`, `diff`.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Git Rebase", url: "https://git-scm.com/docs/git-rebase" },
+                    { text: "Git Stash", url: "https://git-scm.com/docs/git-stash" },
+                    { text: "Git Log", url: "https://git-scm.com/docs/git-log" },
+                    { text: "Git Diff", url: "https://git-scm.com/docs/git-diff" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-27",
+                date: "Aug 27",
+                tasks: [
+                    "Collaborative workflows on GitHub (forking, contributing to open-source projects - theoretical).",
+                    "Set up personal projects on GitHub for Java DSA and Python AI/ML work.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "GitHub Fork a Repo", url: "https://docs.github.com/en/get-started/quickstart/contributing-to-projects" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-28",
+                date: "Aug 28",
+                tasks: [
+                    "Practice daily commits, branching, merging, and submitting pull requests to your own repositories.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "GitHub Docs", url: "https://docs.github.com/en" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-29",
+                date: "Aug 29",
+                tasks: [
+                    "'The Missing Semester of Your CS Education' (MIT): Focus on 'Shell Tools and Scripting'.",
+                    "Basic Linux commands (`ls`, `cd`, `mkdir`, `rm`, `cp`, `mv`).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "The Missing Semester of Your CS Education - Shell Tools", url: "https://missing.csail.mit.edu/2020/shell-tools/" },
+                    { text: "Linux Commands Cheatsheet", url: "https://www.hostinger.in/tutorials/linux-commands" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-30",
+                date: "Aug 30",
+                tasks: [
+                    "File permissions (`chmod`), ownership (`chown`).",
+                    "Piping and redirection (`|`, `>`, `>>`).",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Linux File Permissions", url: "https://www.linuxfoundation.org/blog/how-to-manage-file-permissions-on-linux/" },
+                    { text: "Linux I/O Redirection", url: "https://ryanstutorials.net/linuxtutorial/redirection.php" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-08-31",
+                date: "Aug 31",
+                tasks: [
+                    "Shell scripting basics (variables, loops, conditionals).",
+                    "Write simple scripts.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "Shell Scripting Tutorial", url: "https://ryanstutorials.net/linuxtutorial/bashscripting.php" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-09-01",
+                date: "Sep 1",
+                tasks: [
+                    "Professional IDE Usage: PyCharm for Python.",
+                    "Master debugging, refactoring, code navigation.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
+                    { text: "PyCharm Debugging", url: "https://www.jetbrains.com/help/pycharm/debugging-code.html" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-09-02",
+                date: "Sep 2",
+                tasks: [
+                    "IntelliJ IDEA for Java.",
+                    "Debugging, refactoring, Maven/Gradle basics.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
+                    { text: "IntelliJ IDEA Debugging", url: "https://www.jetbrains.com/help/idea/debugging-code.html" },
+                    { text: "Maven", url: "https://maven.apache.org/" },
+                    { text: "Gradle", url: "https://gradle.org/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-09-03",
+                date: "Sep 3",
+                tasks: [
+                    "VS Code for both.",
+                    "Extensions for Python/Java, integrated terminal usage.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs" },
+                    { text: "VS Code Python Extension", url: "https://marketplace.visualstudio.com/items?itemName=ms-python.python" },
+                    { text: "VS Code Java Extension Pack", url: "https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-09-04",
+                date: "Sep 4",
+                tasks: [
+                    "Practice using IDEs for your ongoing DSA and Python projects.",
+                    "Get comfortable with basic build tools for each language.",
+                    "DSA Practice (Daily 1 hour): Continue LeetCode (Medium/Hard) and participate in 1 competitive programming contest this week."
+                ],
+                resources: [
+                    { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
+                    { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
+                    { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" }
+                ]
+            },
+            {
+                id: "2025-09-05_to_2025-09-25",
+                date: "Sep 5 - Sep 25",
+                tasks: [
+                    "Allocate time based on your strengths and weaknesses.",
+                    "**DSA (Java):** Push beyond 500 LeetCode problems. Focus heavily on Medium and Hard difficulties. Participate in 2 competitive programming contests per week. Practice diverse problem types.",
+                    "**Python AI/ML & Dev:** Work on 1-2 small personal projects that integrate your Python AI/ML skills with general software development practices (e.g., a simple web app that uses a trained ML model, a data analysis tool with a CLI). Apply learned best practices: packaging, testing, logging, Git.",
+                    "**Review:** Revisit areas where you struggled. Use CLRS selectively for deep theoretical references if needed."
+                ],
+                resources: [
+                    { text: "Striver's TakeUForward Pinnacle Subscription", url: "https://www.takeuforward.org/strivers-a2z-dsa-course/" },
+                    { text: "LeetCode", url: "https://leetcode.com/" },
+                    { text: "AlgoExpert.io (Paid)", url: "https://www.algoexpert.io/" },
+                    { text: "NeetCode.io (Free/Paid)", url: "https://neetcode.io/" },
+                    { text: "Codeforces", url: "https://codeforces.com/" },
+                    { text: "AtCoder", url: "https://atcoder.jp/" },
+                    { text: "Python for Data Science and Machine Learning Bootcamp", url: "https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/" },
+                    { text: "Andrew Ng's Machine Learning Course", url: "https://www.coursera.org/learn/machine-learning" },
+                    { text: "Machine Learning A-Z™: AI, Python & R Data Science", url: "https://www.udemy.com/course/machinelearning/" },
+                    { text: "fast.ai: Practical Deep Learning for Coders", url: "https://course.fast.ai/" },
+                    { text: "The Complete Python Developer in 202X: Zero to Mastery (Udemy)", url: "https://www.udemy.com/course/complete-python-developer-zero-to-mastery/" },
+                    { text: "Real Python", url: "https://realpython.com/" },
+                    { text: "ArjanCodes YouTube Channel", url: "https://www.youtube.com/@ArjanCodes" },
+                    { text: "Official Python Documentation", url: "https://docs.python.org/3/" },
+                    { text: "NumPy Documentation", url: "https://numpy.org/doc/stable/" },
+                    { text: "Pandas Documentation", url: "https://pandas.pydata.org/docs/" },
+                    { text: "Scikit-learn Documentation", url: "https://scikit-learn.org/stable/documentation.html" },
+                    { text: "TensorFlow Documentation", url: "https://www.tensorflow.org/api_docs/python/tf" },
+                    { text: "PyTorch Documentation", url: "https://pytorch.org/docs/stable/index.html" },
+                    { text: "FastAPI Documentation", url: "https://fastapi.tiangolo.com/" },
+                    { text: "Flask Documentation", url: "https://flask.palletsprojects.com/en/latest/" },
+                    { text: "Pytest Documentation", url: "https://docs.pytest.org/en/stable/" },
+                    { text: "The Missing Semester of Your CS Education", url: "https://missing.csail.mit.edu/" },
+                    { text: "Official GitHub Guides", url: "https://docs.github.com/en" },
+                    { text: "PyCharm Documentation", url: "https://www.jetbrains.com/help/pycharm/" },
+                    { text: "IntelliJ IDEA Documentation", url: "https://www.jetbrains.com/help/idea/" },
+                    { text: "VS Code Documentation", url: "https://code.visualstudio.com/docs/" },
+                    { text: "Introduction to Algorithms (CLRS) - Selective reading for theoretical reference", url: "https://mitpress.mit.edu/books/introduction-algorithms" }
+                ]
+            },
+            {
+                id: "2025-10-01_to_2025-10-23",
+                date: "Sep 26 - Oct 23",
+                tasks: [
+                    "**DSA (Java):** Continue rigorous LeetCode and competitive programming practice. Aim for specific rating goals if you have them.",
+                    "**Python AI/ML & Dev:** Work on a slightly more complex personal project to showcase your capabilities. Start thinking about potential project ideas that combine your AI/ML skills with software engineering.",
+                    "**GSoC Organization Identification (Start browsing):** Spend 1-2 hours daily browsing the Google Summer of Code Official Website. Look at past accepted organizations (2023, 2024, 2025 archives). Filter for Python/AI projects. Create a preliminary list of 5-7 potential Python-based organizations."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website (Browse past years' archives)", url: "https://summerofcode.withgoogle.com/" }
+                ]
+            },
+            {
+                id: "2025-10-24_to_2025-10-30",
+                date: "Oct 24 - Oct 30",
+                tasks: [
+                    "Finalize your list of 5-7 Python-based GSoC target organizations.",
+                    "For each, check community health (mailing lists, Discord/Slack, IRC).",
+                    "Locate 'contributing guidelines' / 'developer guide' for your top 2-3 organizations and read meticulously.",
+                    "Start setting up their development environment for your top 1-2 choices. Document any issues."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" },
+                    { text: "Target Organization's Developer/Contributing Documentation & Communication Channels (e.g., GitHub, mailing lists, Discord/Slack/IRC)", url: "#" }
+                ]
+            },
+            {
+                id: "2025-10-31_to_2025-11-06",
+                date: "Oct 31 - Nov 6",
+                tasks: [
+                    "Spend significant time reading and understanding the core architecture, design patterns, and main functionalities of your target Python codebase.",
+                    "Identify 'good first issues' or 'easy fixes' on their issue tracker.",
+                    "Join their primary communication channels. Introduce yourself.",
+                    "Start with documentation improvements, minor bugs, or missing tests.",
+                    "Aim for 1-2 merged PRs by end of week."
+                ],
+                resources: [
+                    { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
+                    { text: "Issue Tracker", url: "https://github.com/issues" },
+                    { text: "Communication Channels (mailing lists, IRC, Discord/Slack)", url: "#" },
+                    { text: "opensource.guide", url: "https://opensource.guide/how-to-contribute/" }
+                ]
+            },
+            {
+                id: "2025-11-07_to_2025-11-27",
+                date: "Nov 7 - Nov 27",
+                tasks: [
+                    "Continue to identify and work on small, high-quality contributions.",
+                    "Read the backlog of community discussions.",
+                    "Ask smart questions. Provide helpful answers.",
+                    "Aim for a total of **3-5 merged Pull Requests (PRs)** by January 2026.",
+                    "Ensure each PR is well-tested, follows coding style, and has a clear commit message."
+                ],
+                resources: [
+                    { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
+                    { text: "Communication Channels", url: "#" },
+                    { text: "GitHub Pull Request Documentation", url: "https://docs.github.com/en/pull-requests" }
+                ]
+            },
+            {
+                id: "2025-11-28_to_2025-12-25",
+                date: "Nov 28 - Dec 25",
+                tasks: [
+                    "As your understanding grows, pick a slightly more involved bug fix or a small feature implementation in Python.",
+                    "Aim for 1-2 such substantial merged PRs by end of Feb.",
+                    "Proactively engage potential mentors.",
+                    "Discuss potential project ideas based on your contributions and understanding.",
+                    "Ask specific, valuable questions. Get early feedback on your GSoC project idea."
+                ],
+                resources: [
+                    { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
+                    { text: "Communication Channels", url: "#" },
+                    { text: "Direct interaction with potential mentors (e.g., via email, Discord, IRC)", url: "#" }
+                ]
+            },
+            {
+                id: "2025-12-26_to_2026-01-01",
+                date: "Dec 26 - Jan 1",
+                tasks: [
+                    "Continue working on substantial contributions.",
+                    "Monitor the GSoC Official Website for program announcements and timeline release.",
+                    "Keep refining your potential project ideas with mentor feedback."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
+                ]
+            },
+            {
+                id: "2026-01-02_to_2026-01-08",
+                date: "Jan 2 - Jan 8",
+                tasks: [
+                    "*Mid-January 2026: Official GSoC 2026 Program Announcement & Timeline Release.*",
+                    "Confirm your understanding of the official timeline.",
+                    "Continue with contributions and mentor engagement.",
+                    "*Late January 2026: Organization Applications Open.*"
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
+                ]
+            },
+            {
+                id: "2026-01-09_to_2026-01-22",
+                date: "Jan 9 - Jan 22",
+                tasks: [
+                    "Continue to work on substantial contributions (aim for your 1-2 substantial merged PRs).",
+                    "Keep engaging with mentors and refining your project idea based on their feedback."
+                ],
+                resources: [
+                    { text: "Target Organization's GitHub Repository", url: "https://github.com/" },
+                    { text: "Communication Channels", url: "#" },
+                    { text: "Mentors", url: "#" }
+                ]
+            },
+            {
+                id: "2026-01-23_to_2026-01-29",
+                date: "Jan 23 - Jan 29",
+                tasks: [
+                    "Ensure your substantial merged PRs are completed.",
+                    "Continue active communication and idea refinement with potential mentors.",
+                    "*Mid-February 2026: Organization Application Deadline.*"
+                ],
+                resources: [
+                    { text: "Target Organization's GitHub Repository", url: "https://github.com/" }
+                ]
+            },
+            {
+                id: "2026-01-30_to_2026-02-05",
+                date: "Jan 30 - Feb 5",
+                tasks: [
+                    "*Late February 2026: Accepted Organizations Announced.*",
+                    "Confirm your target Python-based organization(s) from the officially accepted list.",
+                    "If your primary choice isn't accepted, pivot immediately to your backup.",
+                    "Review their official GSoC idea list. Select 1-2 organizations and projects to focus on for proposal writing."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website", url: "https://summerofcode.withgoogle.com/" }
+                ]
+            },
+            {
+                id: "2026-02-06_to_2026-02-26",
+                date: "Feb 6 - Feb 26",
+                tasks: [
+                    "Begin structuring your proposal according to GSoC guidelines.",
+                    "Craft a compelling Title & Abstract.",
+                    "Include your Information (contact, GitHub, location/timezone).",
+                    "Write a Detailed Problem Statement.",
+                    "Share early drafts with potential mentors for feedback."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" },
+                    { text: "Your chosen organization's GSoC ideas list", url: "#" }
+                ]
+            },
+            {
+                id: "2026-02-27_to_2026-03-05",
+                date: "Feb 27 - Mar 5",
+                tasks: [
+                    "Develop a Detailed Proposed Solution (Technical Deep Dive - Python Development Focus).",
+                    "Include Architecture & Design (diagrams).",
+                    "Provide Technical Breakdown (specific modules, algorithms, data structures).",
+                    "Detail AI/ML Specifics (if applicable).",
+                    "Detail Software Development Specifics.",
+                    "Send this section to mentors for critical feedback."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
+                ]
+            },
+            {
+                id: "2026-03-06_to_2026-03-12",
+                date: "Mar 6 - Mar 12",
+                tasks: [
+                    "Discuss Alternative Approaches and justify your chosen solution.",
+                    "Detail the Impact on Existing System.",
+                    "Start drafting your Detailed Weekly Timeline (initial breakdown of coding period tasks).",
+                    "Seek mentor feedback diligently."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
+                ]
+            },
+            {
+                id: "2026-03-13_to_2026-03-19",
+                date: "Mar 13 - Mar 19",
+                tasks: [
+                    "Refine the Detailed Weekly Timeline to be extremely granular (including Community Bonding period).",
+                    "Define your Test Plan (unit/integration tests, Python testing frameworks, ML testing strategies).",
+                    "Write your 'About Me' section, highlighting strengths (Java DSA, math aptitude, learning pace) and *crucially* listing pre-GSoC contributions with direct links to merged PRs/commits."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
+                ]
+            },
+            {
+                id: "2026-03-20_to_2026-03-26",
+                date: "Mar 20 - Mar 26",
+                tasks: [
+                    "Add 'Benefits to the Organization' and 'Future Work/Maintenance Plan'.",
+                    "Review for Clarity & Conciseness.",
+                    "Ensure Professionalism (grammar, spelling, formatting).",
+                    "Perform a thorough self-review and get a trusted peer to review for clarity and errors."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" }
+                ]
+            },
+            {
+                id: "2026-03-27_to_2026-04-02",
+                date: "Mar 27 - Apr 2",
+                tasks: [
+                    "*Late March 2026: Contributor Proposals Open.*",
+                    "Send final drafts of your proposal to your potential mentors. Incorporate their feedback diligently.",
+                    "**Early Submission:** Aim to submit your proposal at least 24-48 hours before the absolute deadline (historically around April 8th).",
+                    "Account for time zone differences (IST considerations) and last-minute tech issues."
+                ],
+                resources: [
+                    { text: "Google Summer of Code Official Website - Student Guide", url: "https://summerofcode.withgoogle.com/rules/for-students" },
+                    { text: "GSoC platform for submission", url: "https://summerofcode.withgoogle.com/" },
+                    { text: "Mentors", url: "#" }
+                ]
+            },
+            {
+                id: "2026-05-01_to_2026-05-28",
+                date: "May 1 - May 28",
+                tasks: [
+                    "Formalize your development environment and gain access to organization resources.",
+                    "Have in-depth discussions with your mentor to clarify any ambiguities in your project plan and set detailed weekly goals.",
+                    "Set up regular communication channels (e.g., weekly video calls, daily chat updates).",
+                    "Begin preparatory tasks: setting up test environments, reading more code, writing initial documentation."
+                ],
+                resources: [
+                    { text: "Target Organization's Development Environment", url: "#" },
+                    { text: "Mentor", url: "#" },
+                    { text: "Communication Channels (Discord/Slack/IRC, Email)", url: "#" },
+                    { text: "Project Documentation", url: "#" }
+                ]
+            },
+            {
+                id: "2026-05-29_to_2026-08-18",
+                date: "May 29 - Aug 18",
+                tasks: [
+                    "**Rigorous Adherence to Timeline:** Strive to meet your weekly milestones.",
+                    "**Consistent Communication:** Daily short updates on progress, current work, blockers. Weekly detailed reports (progress, challenges, solutions, next plan). **Never go silent.**",
+                    "**Clean Code & Tests:** Write high-quality, well-documented Python code. Write comprehensive unit and integration tests as you go.",
+                    "**Regular Commits & Pull Requests:** Push code frequently with clear, descriptive commit messages. Create PRs for mentor review regularly.",
+                    "**Seek Help Proactively:** If stuck for more than a few hours, reach out to your mentor.",
+                    "**Be Flexible:** Adapt to evolving requirements. Ensure your mid-term deliverable is met."
+                ],
+                resources: [
+                    { text: "Your Project Proposal", url: "#" },
+                    { text: "Target Organization's Git Repository", url: "https://github.com/" },
+                    { text: "Communication Channels (Discord/Slack/IRC, Email, Video Calls)", url: "#" },
+                    { text: "Mentor", url: "#" },
+                    { text: "Code Editor/IDE", url: "#" },
+                    { text: "Testing Frameworks (e.g., pytest)", url: "https://docs.pytest.org/en/stable/" },
+                    { text: "Linting tools (e.g., Flake8, Black)", url: "https://flake8.pycqa.org/en/latest/" }
+                ]
+            },
+            {
+                id: "2026-08-19_to_2026-08-25",
+                date: "Aug 19 - Aug 25",
+                tasks: [
+                    "Final documentation, code cleanup, final bug fixes."
+                ],
+                resources: [
+                    { text: "Project Documentation", url: "#" },
+                    { text: "Code Repository", url: "https://github.com/" }
+                ]
             }
-            // Set initial selected month
-            monthSelect.value = "June 2025";
+        ];
+
+        const calendarGrid = document.querySelector('.calendar-grid');
+        const currentMonthDisplay = document.getElementById('current-month-display');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const dailyTasksDisplay = document.getElementById('daily-tasks-display');
+
+        let currentCalendarDate = new Date(2025, 5, 20); // Start from June 20, 2025
+
+        // Load task completion states from localStorage
+        const taskCompletionStates = JSON.parse(localStorage.getItem('gsocTaskCompletion')) || {};
+
+        const saveTaskState = (fullTaskId, isCompleted) => {
+            taskCompletionStates[fullTaskId] = isCompleted;
+            localStorage.setItem('gsocTaskCompletion', JSON.stringify(taskCompletionStates));
         };
 
-        const renderDailyPlan = (selectedMonth) => {
-            dailyPlanContent.innerHTML = ''; // Clear previous content
-            const monthTasks = dailyPlanData[selectedMonth];
+        const loadTaskState = (fullTaskId) => {
+            return taskCompletionStates[fullTaskId] || false;
+        };
 
-            if (!monthTasks || monthTasks.length === 0) {
-                dailyPlanContent.innerHTML = '<p class="text-gray-500 text-center py-8">No detailed plan available for this month.</p>';
+        const getTasksForDate = (year, month, day) => {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const tasksForSelectedDay = allDailyTasks.filter(task => {
+                if (task.id === dateStr) return true;
+
+                if (task.id.includes('_to_')) {
+                    const [startId, endId] = task.id.split('_to_');
+                    const startDate = new Date(startId);
+                    const endDate = new Date(endId);
+                    const currentDate = new Date(dateStr);
+                    startDate.setHours(0,0,0,0);
+                    endDate.setHours(0,0,0,0);
+                    currentDate.setHours(0,0,0,0);
+                    return currentDate >= startDate && currentDate <= endDate;
+                }
+                return false;
+            });
+            return tasksForSelectedDay;
+        };
+
+        const renderCalendar = (year, month, selectedDay = null) => {
+            calendarGrid.innerHTML = `
+                <div class="calendar-weekday">Sun</div>
+                <div class="calendar-weekday">Mon</div>
+                <div class="calendar-weekday">Tue</div>
+                <div class="calendar-weekday">Wed</div>
+                <div class="calendar-weekday">Thu</div>
+                <div class="calendar-weekday">Fri</div>
+                <div class="calendar-weekday">Sat</div>
+            `;
+
+            currentMonthDisplay.textContent = new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 for Sunday, 1 for Monday...
+
+            // Add empty days for the start of the week
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day other-month';
+                emptyDay.textContent = '';
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // Add actual days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day current-month';
+                dayElement.textContent = day;
+                dayElement.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                const tasksForDay = getTasksForDate(year, month, day);
+                if (tasksForDay.length > 0) {
+                    dayElement.classList.add('has-tasks');
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    dayElement.appendChild(dot);
+                }
+
+                if (selectedDay === day) {
+                    dayElement.classList.add('selected-day');
+                }
+
+                dayElement.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected-day'));
+                    dayElement.classList.add('selected-day');
+                    renderDailyTasks(dayElement.dataset.date);
+                });
+                calendarGrid.appendChild(dayElement);
+            }
+        };
+
+        const renderDailyTasks = (dateStr) => {
+            dailyTasksDisplay.innerHTML = '';
+            const tasksForDay = getTasksForDate(new Date(dateStr).getFullYear(), new Date(dateStr).getMonth(), new Date(dateStr).getDate());
+
+            if (tasksForDay.length === 0) {
+                dailyTasksDisplay.innerHTML = `<p class="text-gray-500 text-center py-8">No tasks scheduled for ${new Date(dateStr).toDateString()}.</p>`;
                 return;
             }
 
-            monthTasks.forEach(day => {
-                const card = document.createElement('div');
-                card.className = 'card daily-plan-card p-4 rounded-lg shadow-sm mb-4';
-                card.innerHTML = `
-                    <h4 class="font-bold text-lg mb-2 accent-teal">${day.date}</h4>
-                    <p class="text-gray-700 mb-2">${day.tasks}</p>
+            tasksForDay.forEach(dayEntry => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'card daily-plan-card p-4 rounded-lg shadow-sm mb-4';
+                taskCard.innerHTML = `
+                    <h4 class="font-bold text-lg mb-4 accent-teal">${dayEntry.date}</h4>
+                    <div class="space-y-3 mb-4"></div> <!-- Container for individual tasks -->
                     <h5 class="font-semibold text-gray-800 mt-3 mb-1">Resources:</h5>
                     <ul class="list-disc pl-5 text-gray-600 text-sm">
-                        ${day.resources.map(res => `<li><a href="${res.url}" target="_blank" class="daily-plan-resource-link">${res.text}</a></li>`).join('')}
+                        ${dayEntry.resources.map(res => `<li><a href="${res.url}" target="_blank" class="daily-plan-resource-link">${res.text}</a></li>`).join('')}
                     </ul>
                 `;
-                dailyPlanContent.appendChild(card);
+
+                const tasksContainer = taskCard.querySelector('div.space-y-3');
+                dayEntry.tasks.forEach((taskText, index) => {
+                    const fullTaskId = `${dayEntry.id}_task_${index}`; // Unique ID for each sub-task
+                    const isCompleted = loadTaskState(fullTaskId);
+                    const taskLabel = document.createElement('label');
+                    taskLabel.className = `task-checkbox-label ${isCompleted ? 'task-completed' : ''}`;
+                    taskLabel.innerHTML = `
+                        <input type="checkbox" data-full-task-id="${fullTaskId}" ${isCompleted ? 'checked' : ''}>
+                        <p>${taskText}</p>
+                    `;
+                    tasksContainer.appendChild(taskLabel);
+
+                    const checkbox = taskLabel.querySelector(`input[type="checkbox"][data-full-task-id="${fullTaskId}"]`);
+                    checkbox.addEventListener('change', (event) => {
+                        saveTaskState(fullTaskId, event.target.checked);
+                        event.target.closest('.task-checkbox-label').classList.toggle('task-completed', event.target.checked);
+                    });
+                });
+                dailyTasksDisplay.appendChild(taskCard);
             });
         };
 
+        prevMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+            dailyTasksDisplay.innerHTML = '<p class="text-gray-500 text-center py-8">Select a date from the calendar above to view its tasks.</p>';
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+            dailyTasksDisplay.innerHTML = '<p class="text-gray-500 text-center py-8">Select a date from the calendar above to view its tasks.</p>';
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            populateMonthSelect();
-            renderDailyPlan(monthSelect.value); // Render initial month
-            monthSelect.addEventListener('change', (event) => {
-                renderDailyPlan(event.target.value);
-            });
+            renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+            // Automatically select the first day with tasks if any, or today if within first month
+            const today = new Date();
+            const startDay = new Date(2025, 5, 20); // June 20, 2025
+            if (today >= startDay && today.getMonth() === currentCalendarDate.getMonth() && today.getFullYear() === currentCalendarDate.getFullYear()) {
+                const dayElement = document.querySelector(`.calendar-day[data-date="${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}"]`);
+                if (dayElement) {
+                    dayElement.click();
+                } else {
+                    dailyTasksDisplay.innerHTML = '<p class="text-gray-500 text-center py-8">Select a date from the calendar above to view its tasks.</p>';
+                }
+            } else {
+                 dailyTasksDisplay.innerHTML = '<p class="text-gray-500 text-center py-8">Select a date from the calendar above to view its tasks.</p>';
+            }
         });
     </script>
 </body>
